@@ -65,3 +65,7 @@ Create one standalone weathered Japanese timber entry gate for a forest path. Us
 - Use the fern and rock for close foreground accents; reuse the simple procedural trees in the distance.
 - Keep a copy of each model's creator and license in a credits file before releasing the game.
 - Official Sketchfab downloads in this session asked for a Sketchfab login. Sign in manually before any download; do not use third-party rippers.
+
+## Imported user model
+
+`Japanese_Pine_v1_1K.glb` is the supplied distant pine. It is about 10 m tall and has 3,931 triangles. Its three embedded 4096x4096 PNG textures were resized to 1024x1024, reducing the GLB from 31.07 MiB to 3.50 MiB. The source file in Downloads was left unchanged.

@@ -1,5 +1,7 @@
 extends Node3D
 
+const DISTANT_PINE_SCENE := preload("res://assets/models/Japanese_Pine_v1_1K.glb")
+
 var _canopies: Array[Node3D] = []
 var _flicker_lights: Array[OmniLight3D] = []
 var _camera: Camera3D
@@ -220,13 +222,26 @@ func _build_gameplay_forest() -> void:
 				leaf_materials[rng.randi_range(0, leaf_materials.size() - 1)], rng, true)
 		if row % 3 == 0:
 			for side in [-1.0, 1.0]:
-				var height := rng.randf_range(7.5, 11.0)
-				_create_tree(Vector3(side * rng.randf_range(19.0, 22.0), 0.0, z - 2.1), height,
-					trunk_materials[rng.randi_range(0, trunk_materials.size() - 1)],
-					leaf_materials[rng.randi_range(0, leaf_materials.size() - 1)], rng, true)
+				var distant_origin := Vector3(side * rng.randf_range(19.0, 22.0), 0.0, z - 2.1)
+				_create_distant_pine(distant_origin, rng.randf_range(0.8, 1.1), rng.randf_range(0.0, TAU))
 		if row % 2 == 0:
 			_create_fern_cluster(Vector3(-7.0, 0.0, z - 1.2), rng)
 			_create_fern_cluster(Vector3(7.0, 0.0, z - 3.0), rng)
+
+func _create_distant_pine(origin: Vector3, size: float, yaw: float) -> void:
+	var tree := DISTANT_PINE_SCENE.instantiate() as Node3D
+	tree.name = "DistantJapanesePine"
+	tree.position = origin
+	tree.rotation.y = yaw
+	tree.scale = Vector3.ONE * size
+	_disable_shadows_recursively(tree)
+	add_child(tree)
+
+func _disable_shadows_recursively(node: Node) -> void:
+	for child in node.get_children():
+		if child is GeometryInstance3D:
+			child.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		_disable_shadows_recursively(child)
 
 func _create_rock_ring(center: Vector3, radius: float, count: int, material: Material, seed_value: int) -> void:
 	var rng := RandomNumberGenerator.new()
