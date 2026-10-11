@@ -1,19 +1,35 @@
-# The Last Lantern — Main Menu
+# The Last Lantern
 
-This project currently opens on the supplied cinematic main-menu artwork. The menu fills and scales with the game window, including when it is maximized or restored to a smaller size.
+A small Godot 4.7 horror-exploration foundation for a solo game jam. The project opens on a 3D moonlit forest menu, includes a persistent settings screen, and has a playable opening path with one interactable lantern.
 
 ## Run
 
-Open `project.godot` in Godot 4.7 or newer, then press **F6** while `main_menu.tscn` is open or press **F5** to run the project. The project starts maximized; restore or resize the window to check the responsive layout.
+Open this folder's `project.godot` in Godot 4.7 or newer and press **F5**. The game starts maximized. Press **F6** to run the currently open scene from the editor.
 
-## Menu controls
+## Controls
 
-- **PLAY** and **SETTINGS** are clickable, transparent hit areas over the text in the provided image. Their signals are ready to connect after the forest scene and settings reference are ready.
-- **QUIT** closes the game.
+| Key | Action |
+| --- | --- |
+| W A S D | Move relative to the camera |
+| Q / E | Smoothly orbit the camera by the configured step |
+| F | Light the lantern or use a nearby object |
+| Esc | Pause / go back |
+| Mouse | UI navigation; gameplay look is optional and off by default |
 
-## Files
+The opening scene has one working lantern. The counter is prepared for four; the remaining level content is not part of this foundation.
 
-- `assets/ui/main_menu_reference.png` — supplied menu reference used as the exact full-screen background.
-- `scenes/main_menu.tscn` — project startup scene.
-- `scripts/ui/main_menu.gd` — responsive menu hit areas and button signals.
-- `assets/character/` — the explorer model and textures supplied with the project; preserved for the future forest scene.
+## Settings
+
+Gameplay settings affect the player camera, interaction distance, and prompt. Graphics settings apply display mode, supported window size, VSync, and 3D anti-aliasing quality. Audio sliders control the Master, Music, and SFX buses. UI scale and prompt visibility are applied when **APPLY** is pressed. **BACK** discards un-applied changes. Applied settings persist in `user://settings.cfg`.
+
+The language control is intentionally not offered as an active selector yet: Arabic translation and right-to-left layout are not implemented. No music or sound files are included, but the audio buses are ready for later assets.
+
+## Project structure
+
+- `scenes/main_menu.tscn` and `scripts/ui/main_menu.gd` — 3D menu, keyboard/mouse navigation, and Play/Settings/Quit flow.
+- `scenes/environment/menu_environment.tscn` and `scripts/world/forest_environment.gd` — lightweight forest, torii, lanterns, fog, and moving atmospheric details.
+- `scenes/ui/settings_menu.tscn` and `scripts/ui/settings_menu.gd` — settings categories and controls.
+- `scenes/forest.tscn`, `scenes/player.tscn`, and `scripts/` — playable opening scene, third-person movement, camera orbit, pause menu, HUD, and lantern interaction.
+- `assets/character/explorer.glb` — the supplied explorer model.
+
+The original menu image remains in `assets/ui/main_menu_reference.png` for comparison only; the game draws its background from the 3D environment.
