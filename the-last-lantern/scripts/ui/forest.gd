@@ -6,6 +6,12 @@ const LANTERN_SCRIPT := preload("res://scripts/world/lantern.gd")
 const HUD_SCENE := preload("res://scenes/ui/hud.tscn")
 const PAUSE_SCENE := preload("res://scenes/ui/pause_menu.tscn")
 const MAIN_MENU_PATH := "res://scenes/main_menu.tscn"
+const LANTERN_POSITIONS := [
+	Vector3(0.0, 0.0, -8.7),
+	Vector3(-8.2, 0.0, -19.8),
+	Vector3(8.4, 0.0, -20.3),
+	Vector3(0.0, 0.0, -34.3),
+]
 
 var _player: CharacterBody3D
 var _hud: Control
@@ -18,7 +24,7 @@ func _ready() -> void:
 	var environment := ENVIRONMENT_SCRIPT.new()
 	add_child(environment)
 	environment.call("build_gameplay")
-	_create_gameplay_lantern()
+	_create_gameplay_lanterns()
 	_player = PLAYER_SCENE.instantiate() as CharacterBody3D
 	_player.name = "Player"
 	_player.position = Vector3(0.0, 0.02, 3.7)
@@ -34,17 +40,20 @@ func _unhandled_input(event: InputEvent) -> void:
 		_pause_menu.call("open")
 		get_viewport().set_input_as_handled()
 
-func _create_gameplay_lantern() -> void:
+func _create_gameplay_lanterns() -> void:
+	for index in LANTERN_POSITIONS.size():
+		_create_gameplay_lantern(index + 1, LANTERN_POSITIONS[index])
+
+func _create_gameplay_lantern(index: int, world_position: Vector3) -> void:
 	var lantern := LANTERN_SCRIPT.new()
-	lantern.name = "FirstLantern"
-	lantern.position = Vector3(0.0, 0.0, -1.4)
+	lantern.name = "Lantern_%02d" % index
+	lantern.position = world_position
 	var collision := CollisionShape3D.new()
 	var sphere := SphereShape3D.new()
-	sphere.radius = 1.0
+	sphere.radius = 1.15
 	collision.shape = sphere
-	collision.position = Vector3(0.0, 1.28, 0.0)
+	collision.position = Vector3(0.0, 1.25, 0.0)
 	lantern.add_child(collision)
-	add_child(lantern)
 	var stone := _material(Color("3a3d3d"), 0.82)
 	var dark_stone := _material(Color("232a2b"), 0.93)
 	var unlit_glass := _material(Color("211b16"), 0.38)
@@ -78,6 +87,7 @@ func _create_gameplay_lantern() -> void:
 	lamp_light.shadow_enabled = false
 	lamp_light.visible = false
 	lantern.add_child(lamp_light)
+	add_child(lantern)
 	lantern.connect("lit_changed", Callable(self, "_on_lantern_lit"))
 
 func _create_ui() -> void:

@@ -32,4 +32,10 @@ The project contains no music, ambience, or UI sound assets. The Audio screen in
 - `scenes/forest.tscn`, `scenes/player.tscn`, and `scripts/` — playable opening, third-person movement, camera orbit, pause menu, HUD, and lantern interaction.
 - `assets/character/explorer.glb` — supplied explorer model.
 
-The forest opening currently has one working lantern; the counter and progression are prepared for four, while the remaining locations and temple puzzle still need to be built.
+The opening now has four working lanterns and a compact forest blockout. The gate progression, final puzzle, and ending still need to be built.
+
+## Prototype status
+
+The current forest is a compact, connected blockout with a starting trail, plank bridge, abandoned timber house, moonlit pond, rocky clearing, Torii gate, and timber hall. Four lanterns are interactable with the existing F-key system. Trees, fog, and lighting use lightweight procedural placeholders; imported final environment art has not been added yet. The temple gate progression, final puzzle, and ending are still future work.
+
+See [`assets/models/README.md`](assets/models/README.md) for the reviewed model shortlist, licensing notes, and Meshy prompts.

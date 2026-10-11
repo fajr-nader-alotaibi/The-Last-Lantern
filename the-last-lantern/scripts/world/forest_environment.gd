@@ -16,10 +16,249 @@ func build_menu() -> void:
 	_create_drifting_motes()
 
 func build_gameplay() -> void:
-	_build_base_world()
-	_build_forest_line()
-	_build_path_and_torii()
-	_build_stone_lanterns(false)
+	_build_gameplay_world()
+	_build_gameplay_paths()
+	_build_gameplay_landmarks()
+	_build_gameplay_forest()
+
+func _build_gameplay_world() -> void:
+	var world_environment := WorldEnvironment.new()
+	var environment := Environment.new()
+	_fog_environment = environment
+	environment.background_mode = Environment.BG_COLOR
+	environment.background_color = Color("08111a")
+	environment.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
+	environment.ambient_light_color = Color("526276")
+	environment.ambient_light_energy = 0.38
+	environment.tonemap_mode = Environment.TONE_MAPPER_FILMIC
+	environment.fog_enabled = true
+	environment.fog_light_color = Color("263744")
+	environment.fog_density = 0.018
+	environment.fog_sun_scatter = 0.12
+	environment.fog_depth_begin = 8.0
+	environment.fog_depth_end = 54.0
+	world_environment.environment = environment
+	add_child(world_environment)
+
+	var moonlight := DirectionalLight3D.new()
+	moonlight.name = "Moonlight"
+	moonlight.light_color = Color("a8c5e4")
+	moonlight.light_energy = 0.32
+	moonlight.rotation_degrees = Vector3(-48.0, -24.0, 0.0)
+	moonlight.shadow_enabled = false
+	add_child(moonlight)
+
+	var ground := MeshInstance3D.new()
+	ground.name = "ForestFloor"
+	var ground_mesh := PlaneMesh.new()
+	ground_mesh.size = Vector2(52.0, 70.0)
+	ground.mesh = ground_mesh
+	ground.material_override = _material(Color("11191a"), 0.98)
+	ground.position = Vector3(0.0, -0.22, -23.0)
+	ground.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	add_child(ground)
+
+	var ground_body := StaticBody3D.new()
+	ground_body.name = "ForestGroundCollision"
+	ground_body.position = ground.position
+	var ground_collision := CollisionShape3D.new()
+	var ground_shape := BoxShape3D.new()
+	ground_shape.size = Vector3(52.0, 0.4, 70.0)
+	ground_collision.shape = ground_shape
+	ground_body.add_child(ground_collision)
+	add_child(ground_body)
+
+func _build_gameplay_paths() -> void:
+	var path_material := _material(Color("292d2c"), 0.94)
+	var edge_material := _material(Color("202728"), 0.96)
+	var routes := [
+		[Vector3(0.0, 0.0, 5.0), Vector3(0.0, 0.0, -9.0)],
+		[Vector3(0.0, 0.0, -9.0), Vector3(0.0, 0.0, -14.0)],
+		[Vector3(0.0, 0.0, -14.0), Vector3(-5.0, 0.0, -17.0)],
+		[Vector3(-5.0, 0.0, -17.0), Vector3(-9.0, 0.0, -20.0)],
+		[Vector3(-9.0, 0.0, -20.0), Vector3(-5.0, 0.0, -26.0)],
+		[Vector3(-5.0, 0.0, -26.0), Vector3(0.0, 0.0, -28.0)],
+		[Vector3(0.0, 0.0, -28.0), Vector3(5.0, 0.0, -26.0)],
+		[Vector3(5.0, 0.0, -26.0), Vector3(9.0, 0.0, -20.0)],
+		[Vector3(9.0, 0.0, -20.0), Vector3(5.0, 0.0, -17.0)],
+		[Vector3(5.0, 0.0, -17.0), Vector3(0.0, 0.0, -14.0)],
+		[Vector3(0.0, 0.0, -28.0), Vector3(0.0, 0.0, -35.0)],
+		[Vector3(0.0, 0.0, -35.0), Vector3(0.0, 0.0, -46.0)],
+	]
+	for index in routes.size():
+		var route: Array = routes[index]
+		_path_segment(route[0], route[1], 3.1, path_material, "ForestTrail_%02d" % index)
+
+	# A shallow stream crosses under a simple plank bridge at the first lantern.
+	var stream := MeshInstance3D.new()
+	stream.name = "NarrowForestStream"
+	var stream_mesh := BoxMesh.new()
+	stream_mesh.size = Vector3(20.0, 0.025, 2.3)
+	stream.mesh = stream_mesh
+	stream.material_override = _material(Color("182c36"), 0.35)
+	stream.position = Vector3(0.0, -0.105, -9.0)
+	stream.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	add_child(stream)
+	var plank_material := _material(Color("302923"), 0.94)
+	for index in range(9):
+		var plank := MeshInstance3D.new()
+		plank.name = "BridgePlank_%02d" % index
+		var plank_mesh := BoxMesh.new()
+		plank_mesh.size = Vector3(3.5, 0.075, 0.31)
+		plank.mesh = plank_mesh
+		plank.material_override = plank_material if index % 2 == 0 else edge_material
+		plank.position = Vector3(0.0, -0.015, -10.25 + index * 0.32)
+		plank.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		add_child(plank)
+
+func _path_segment(start: Vector3, finish: Vector3, width: float, material: Material, node_name: String) -> void:
+	var segment := MeshInstance3D.new()
+	segment.name = node_name
+	var mesh := BoxMesh.new()
+	mesh.size = Vector3(width, 0.055, start.distance_to(finish))
+	segment.mesh = mesh
+	segment.material_override = material
+	segment.position = (start + finish) * 0.5 + Vector3(0.0, -0.115, 0.0)
+	var direction := finish - start
+	segment.rotation.y = atan2(direction.x, direction.z)
+	segment.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	add_child(segment)
+
+func _build_gameplay_landmarks() -> void:
+	var wood := _material(Color("29211e"), 0.9)
+	var wood_trim := _material(Color("49332b"), 0.86)
+	var roof_material := _material(Color("171d20"), 0.9)
+	var stone := _material(Color("343a3c"), 0.95)
+	var water := _material(Color("172b34"), 0.28)
+
+	# The forgotten shrine is treated as an abandoned forest house: no icons or statues.
+	_box(Vector3(-12.5, 1.2, -20.0), Vector3(4.4, 2.4, 3.4), wood, "ForgottenForestHouse")
+	var house_roof := MeshInstance3D.new()
+	var house_roof_mesh := PrismMesh.new()
+	house_roof_mesh.size = Vector3(5.0, 1.15, 4.2)
+	house_roof.mesh = house_roof_mesh
+	house_roof.material_override = roof_material
+	house_roof.position = Vector3(-12.5, 2.95, -20.0)
+	house_roof.name = "ForestHouseRoof"
+	house_roof.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	add_child(house_roof)
+	_box(Vector3(-12.5, 0.92, -18.25), Vector3(1.35, 1.82, 0.12), wood_trim, "ForestHouseDoor")
+	_box(Vector3(-14.25, 1.35, -18.24), Vector3(0.55, 0.52, 0.1), stone, "HouseWindowLeft")
+	_box(Vector3(-10.75, 1.35, -18.24), Vector3(0.55, 0.52, 0.1), stone, "HouseWindowRight")
+
+	# The pond uses one cheap water mesh; rocks and trees provide the shoreline.
+	var pond := MeshInstance3D.new()
+	pond.name = "MoonlitPond"
+	var pond_mesh := CylinderMesh.new()
+	pond_mesh.top_radius = 1.0
+	pond_mesh.bottom_radius = 1.0
+	pond_mesh.height = 1.0
+	pond_mesh.radial_segments = 24
+	pond.mesh = pond_mesh
+	pond.scale = Vector3(4.2, 0.035, 3.1)
+	pond.material_override = water
+	pond.position = Vector3(10.5, -0.105, -23.0)
+	pond.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	add_child(pond)
+	_create_rock_ring(Vector3(10.5, 0.0, -23.0), 4.8, 15, stone, 301)
+
+	# A low rocky clearing marks the fourth lantern without a tall step the player cannot climb.
+	_box(Vector3(0.0, -0.02, -35.0), Vector3(8.0, 0.16, 5.0), stone, "CliffsideClearing")
+	_box(Vector3(0.0, 0.65, -35.0), Vector3(1.25, 1.3, 0.8), wood_trim, "CliffsideStoneMarker")
+	_create_rock_ring(Vector3(0.0, 0.0, -35.0), 5.4, 12, stone, 907)
+
+	# Torii entrance and a small timber hall frame the forest's far end.
+	var torii := _material(Color("30201e"), 0.84, Color("361b18"), 0.06)
+	_box(Vector3(-3.25, 2.35, -43.0), Vector3(0.38, 4.7, 0.48), torii, "TempleGatePillarLeft")
+	_box(Vector3(3.25, 2.35, -43.0), Vector3(0.38, 4.7, 0.48), torii, "TempleGatePillarRight")
+	_box(Vector3(0.0, 4.65, -43.0), Vector3(7.6, 0.4, 0.72), torii, "TempleGateCrossbeam")
+	_box(Vector3(0.0, 4.0, -43.0), Vector3(6.4, 0.22, 0.5), torii, "TempleGateLowerBeam")
+
+	_box(Vector3(0.0, 0.12, -51.0), Vector3(10.0, 0.24, 8.0), stone, "TempleForecourt")
+	_box(Vector3(0.0, 2.2, -51.5), Vector3(8.0, 4.0, 5.8), wood, "FinalTimberHall")
+	_box(Vector3(0.0, 1.35, -48.55), Vector3(2.0, 2.55, 0.14), wood_trim, "FinalHallDoubleDoor")
+	var temple_roof := MeshInstance3D.new()
+	var temple_roof_mesh := PrismMesh.new()
+	temple_roof_mesh.size = Vector3(10.2, 1.5, 7.4)
+	temple_roof.mesh = temple_roof_mesh
+	temple_roof.material_override = roof_material
+	temple_roof.position = Vector3(0.0, 4.9, -51.5)
+	temple_roof.name = "FinalHallRoof"
+	temple_roof.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	add_child(temple_roof)
+	for index in range(5):
+		var step := MeshInstance3D.new()
+		step.name = "TempleStep_%02d" % index
+		var step_mesh := BoxMesh.new()
+		step_mesh.size = Vector3(4.1 + index * 0.55, 0.12, 0.45)
+		step.mesh = step_mesh
+		step.material_override = stone
+		step.position = Vector3(0.0, -0.05 + index * 0.035, -46.1 - index * 0.52)
+		step.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		add_child(step)
+
+func _build_gameplay_forest() -> void:
+	var trunk_materials := [
+		_material(Color("17191a"), 0.96),
+		_material(Color("211d1b"), 0.94),
+		_material(Color("141a1c"), 0.97),
+	]
+	var leaf_materials := [
+		_material(Color("0e191b"), 0.98),
+		_material(Color("122022"), 0.98),
+		_material(Color("172123"), 0.97),
+	]
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 4102026
+	for row in range(8):
+		var z := 1.0 - row * 4.9
+		for side in [-1.0, 1.0]:
+			var x := side * rng.randf_range(13.5, 17.5)
+			var height := rng.randf_range(8.0, 12.5)
+			_create_tree(Vector3(x, 0.0, z + rng.randf_range(-1.0, 1.0)), height,
+				trunk_materials[rng.randi_range(0, trunk_materials.size() - 1)],
+				leaf_materials[rng.randi_range(0, leaf_materials.size() - 1)], rng, true)
+		if row % 3 == 0:
+			for side in [-1.0, 1.0]:
+				var height := rng.randf_range(7.5, 11.0)
+				_create_tree(Vector3(side * rng.randf_range(19.0, 22.0), 0.0, z - 2.1), height,
+					trunk_materials[rng.randi_range(0, trunk_materials.size() - 1)],
+					leaf_materials[rng.randi_range(0, leaf_materials.size() - 1)], rng, true)
+		if row % 2 == 0:
+			_create_fern_cluster(Vector3(-7.0, 0.0, z - 1.2), rng)
+			_create_fern_cluster(Vector3(7.0, 0.0, z - 3.0), rng)
+
+func _create_rock_ring(center: Vector3, radius: float, count: int, material: Material, seed_value: int) -> void:
+	var rng := RandomNumberGenerator.new()
+	rng.seed = seed_value
+	for index in count:
+		var angle := TAU * float(index) / float(count) + rng.randf_range(-0.12, 0.12)
+		var rock := MeshInstance3D.new()
+		rock.name = "MossyRock_%02d" % index
+		var mesh := SphereMesh.new()
+		mesh.radial_segments = 7
+		mesh.rings = 4
+		rock.mesh = mesh
+		rock.material_override = material
+		rock.scale = Vector3(rng.randf_range(0.35, 0.8), rng.randf_range(0.18, 0.48), rng.randf_range(0.35, 0.72))
+		rock.position = center + Vector3(cos(angle) * radius, rock.scale.y * 0.72, sin(angle) * radius)
+		rock.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		add_child(rock)
+
+func _create_fern_cluster(origin: Vector3, rng: RandomNumberGenerator) -> void:
+	var material := _material(Color("1b2923"), 0.98)
+	for index in range(3):
+		var frond := MeshInstance3D.new()
+		frond.name = "FernFrond"
+		var mesh := PrismMesh.new()
+		mesh.size = Vector3(0.28, rng.randf_range(0.5, 0.9), 0.16)
+		frond.mesh = mesh
+		frond.material_override = material
+		frond.position = origin + Vector3(rng.randf_range(-0.28, 0.28), mesh.size.y * 0.5, rng.randf_range(-0.28, 0.28))
+		frond.rotation.z = rng.randf_range(-0.4, 0.4)
+		frond.rotation.y = rng.randf_range(0.0, TAU)
+		frond.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		add_child(frond)
 
 func _process(delta: float) -> void:
 	_time += delta
@@ -101,7 +340,7 @@ func _build_forest_line() -> void:
 				trunk_materials[rng.randi_range(0, trunk_materials.size() - 1)],
 				leaf_materials[rng.randi_range(0, leaf_materials.size() - 1)], rng)
 
-func _create_tree(origin: Vector3, height: float, trunk_material: Material, leaf_material: Material, rng: RandomNumberGenerator) -> void:
+func _create_tree(origin: Vector3, height: float, trunk_material: Material, leaf_material: Material, rng: RandomNumberGenerator, add_collision: bool = false) -> void:
 	var trunk := MeshInstance3D.new()
 	trunk.name = "PineTrunk"
 	var trunk_mesh := CylinderMesh.new()
@@ -113,7 +352,19 @@ func _create_tree(origin: Vector3, height: float, trunk_material: Material, leaf
 	trunk.material_override = trunk_material
 	trunk.position = origin + Vector3(0.0, height * 0.5, 0.0)
 	trunk.rotation.z = rng.randf_range(-0.035, 0.035)
+	trunk.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	add_child(trunk)
+	if add_collision:
+		var trunk_body := StaticBody3D.new()
+		trunk_body.name = "PineTrunkCollision"
+		trunk_body.position = origin + Vector3(0.0, 1.05, 0.0)
+		var trunk_collision := CollisionShape3D.new()
+		var trunk_shape := CapsuleShape3D.new()
+		trunk_shape.radius = 0.38
+		trunk_shape.height = 2.1
+		trunk_collision.shape = trunk_shape
+		trunk_body.add_child(trunk_collision)
+		add_child(trunk_body)
 
 	var canopy_root := Node3D.new()
 	canopy_root.name = "SwayingCrown"
@@ -130,6 +381,7 @@ func _create_tree(origin: Vector3, height: float, trunk_material: Material, leaf
 		cone.mesh = cone_mesh
 		cone.material_override = leaf_material
 		cone.position.y = 1.25 - layer * 1.15
+		cone.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		canopy_root.add_child(cone)
 
 func _build_path_and_torii() -> void:
