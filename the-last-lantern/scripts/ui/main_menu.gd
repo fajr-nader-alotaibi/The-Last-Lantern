@@ -1,14 +1,19 @@
 extends Control
 
 const SETTINGS_MENU_SCENE := preload("res://scenes/ui/settings_menu.tscn")
-const MENU_ENVIRONMENT_SCENE := preload("res://scenes/environment/menu_environment.tscn")
+const MENU_BACKGROUND := preload("res://assets/ui/menu_forest_background.png")
 const FOREST_SCENE_PATH := "res://scenes/forest.tscn"
 const AMBER := Color("e8a45b")
 const PAPER := Color("e8e2d9")
 
 var _home: Control
 var _settings: Control
+var _title: Label
+var _subtitle: Label
 var _play_button: Button
+var _settings_button: Button
+var _quit_button: Button
+var _quit_dialog: ConfirmationDialog
 var _fade: ColorRect
 var _serif: SystemFont
 
@@ -18,37 +23,40 @@ func _ready() -> void:
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	_serif = SystemFont.new()
 	_serif.font_names = PackedStringArray(["Georgia", "Times New Roman"])
-	var environment := MENU_ENVIRONMENT_SCENE.instantiate()
-	add_child(environment)
-	environment.call("build_menu")
+	_build_image_background()
 	_build_home()
 	_settings = SETTINGS_MENU_SCENE.instantiate()
 	_settings.visible = false
 	_settings.connect("back_requested", Callable(self, "_on_settings_back"))
 	add_child(_settings)
+	_create_quit_dialog()
 	_create_fade_overlay()
+	SettingsManager.settings_changed.connect(_sync_language)
+	_sync_language(SettingsManager.get_values_copy())
 
-func _build_home() -> void:
-	_home = Control.new()
-	_home.name = "MainMenuOverlay"
-	_home.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	_home.mouse_filter = Control.MOUSE_FILTER_PASS
-	add_child(_home)
-
-	var dimmer := ColorRect.new()
-	dimmer.color = Color(0.01, 0.02, 0.027, 0.18)
-	dimmer.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	dimmer.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_home.add_child(dimmer)
-
+func _build_image_background() -> void:
+	var image := TextureRect.new()
+	image.name = "ForestBackgroundImage"
+	image.texture = MENU_BACKGROUND
+	image.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	image.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+	image.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	image.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(image)
+	var atmosphere := ColorRect.new()
+	atmosphere.name = "AtmosphereTint"
+	atmosphere.color = Color(0.012, 0.025, 0.045, 0.16)
+	atmosphere.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	atmosphere.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(atmosphere)
 	var gradient := Gradient.new()
-	gradient.offsets = PackedFloat32Array([0.0, 0.27, 0.48, 0.65, 1.0])
+	gradient.offsets = PackedFloat32Array([0.0, 0.27, 0.50, 0.72, 1.0])
 	gradient.colors = PackedColorArray([
-		Color(0.005, 0.009, 0.012, 0.84),
-		Color(0.005, 0.009, 0.012, 0.68),
-		Color(0.005, 0.009, 0.012, 0.28),
-		Color(0.005, 0.009, 0.012, 0.0),
-		Color(0.005, 0.009, 0.012, 0.0),
+		Color(0.004, 0.008, 0.013, 0.80),
+		Color(0.004, 0.008, 0.013, 0.68),
+		Color(0.004, 0.008, 0.013, 0.38),
+		Color(0.004, 0.008, 0.013, 0.08),
+		Color(0.004, 0.008, 0.013, 0.0),
 	])
 	var gradient_texture := GradientTexture2D.new()
 	gradient_texture.gradient = gradient
@@ -63,87 +71,62 @@ func _build_home() -> void:
 	left_scrim.stretch_mode = TextureRect.STRETCH_SCALE
 	left_scrim.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	left_scrim.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_home.add_child(left_scrim)
+	add_child(left_scrim)
 
-	var title_top := Label.new()
-	title_top.text = "THE LAST"
-	title_top.set_anchors_preset(Control.PRESET_TOP_LEFT)
-	title_top.anchor_left = 0.075
-	title_top.anchor_top = 0.17
-	title_top.offset_right = 465.0
-	title_top.offset_bottom = 61.0
-	title_top.add_theme_font_override("font", _serif)
-	title_top.add_theme_font_size_override("font_size", 42)
-	title_top.add_theme_color_override("font_color", PAPER)
-	title_top.add_theme_constant_override("character_spacing", 5)
-	_home.add_child(title_top)
-
-	var title_bottom := Label.new()
-	title_bottom.text = "LANTERN"
-	title_bottom.set_anchors_preset(Control.PRESET_TOP_LEFT)
-	title_bottom.anchor_left = 0.07
-	title_bottom.anchor_top = 0.225
-	title_bottom.offset_right = 540.0
-	title_bottom.offset_bottom = 91.0
-	title_bottom.add_theme_font_override("font", _serif)
-	title_bottom.add_theme_font_size_override("font_size", 66)
-	title_bottom.add_theme_color_override("font_color", PAPER)
-	title_bottom.add_theme_constant_override("character_spacing", 3)
-	_home.add_child(title_bottom)
-
-	var subtitle := Label.new()
-	subtitle.text = "FOUR LANTERNS. ONE WAY OUT."
-	subtitle.set_anchors_preset(Control.PRESET_TOP_LEFT)
-	subtitle.anchor_left = 0.08
-	subtitle.anchor_top = 0.345
-	subtitle.offset_right = 470.0
-	subtitle.offset_bottom = 26.0
-	subtitle.add_theme_font_override("font", _serif)
-	subtitle.add_theme_font_size_override("font_size", 14)
-	subtitle.add_theme_color_override("font_color", Color("c8c4bd"))
-	subtitle.add_theme_constant_override("character_spacing", 4)
-	_home.add_child(subtitle)
-
-	var menu_buttons: Array[Button] = []
-	_play_button = _make_menu_button("◇      PLAY", 0.46, _on_play_pressed)
-	menu_buttons.append(_play_button)
-	menu_buttons.append(_make_menu_button("◇      SETTINGS", 0.535, _on_settings_pressed))
-	menu_buttons.append(_make_menu_button("◇      QUIT", 0.61, _on_quit_pressed))
-	for button in menu_buttons:
-		_home.add_child(button)
-	for index in menu_buttons.size():
-		var button := menu_buttons[index]
-		button.focus_neighbor_top = button.get_path_to(menu_buttons[(index - 1 + menu_buttons.size()) % menu_buttons.size()])
-		button.focus_neighbor_bottom = button.get_path_to(menu_buttons[(index + 1) % menu_buttons.size()])
+func _build_home() -> void:
+	_home = Control.new()
+	_home.name = "MainMenuOverlay"
+	_home.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_home.mouse_filter = Control.MOUSE_FILTER_PASS
+	add_child(_home)
+	_title = Label.new()
+	_title.name = "GameTitle"
+	_title.text = "THE LAST\nLANTERN"
+	_title.add_theme_font_override("font", _serif)
+	_title.add_theme_font_size_override("font_size", 64)
+	_title.add_theme_color_override("font_color", PAPER)
+	_title.add_theme_constant_override("line_spacing", -8)
+	_title.add_theme_constant_override("character_spacing", 3)
+	_home.add_child(_title)
+	_subtitle = Label.new()
+	_subtitle.name = "GameSubtitle"
+	_subtitle.add_theme_font_override("font", _serif)
+	_subtitle.add_theme_font_size_override("font_size", 14)
+	_subtitle.add_theme_color_override("font_color", Color("c8c4bd"))
+	_subtitle.add_theme_constant_override("character_spacing", 3)
+	_home.add_child(_subtitle)
+	_play_button = _make_menu_button(0.46, _on_play_pressed)
+	_settings_button = _make_menu_button(0.535, _on_settings_pressed)
+	_quit_button = _make_menu_button(0.61, _on_quit_pressed)
+	_home.add_child(_play_button)
+	_home.add_child(_settings_button)
+	_home.add_child(_quit_button)
+	_play_button.focus_neighbor_top = _play_button.get_path_to(_quit_button)
+	_play_button.focus_neighbor_bottom = _play_button.get_path_to(_settings_button)
+	_settings_button.focus_neighbor_top = _settings_button.get_path_to(_play_button)
+	_settings_button.focus_neighbor_bottom = _settings_button.get_path_to(_quit_button)
+	_quit_button.focus_neighbor_top = _quit_button.get_path_to(_settings_button)
+	_quit_button.focus_neighbor_bottom = _quit_button.get_path_to(_play_button)
 	_play_button.grab_focus.call_deferred()
 
-func _make_menu_button(text: String, top_anchor: float, callback: Callable) -> Button:
+func _make_menu_button(top_anchor: float, callback: Callable) -> Button:
 	var button := Button.new()
-	button.text = text
+	button.custom_minimum_size = Vector2(390, 54)
 	button.set_anchors_preset(Control.PRESET_TOP_LEFT)
-	button.anchor_left = 0.075
 	button.anchor_top = top_anchor
-	button.anchor_right = 0.34
 	button.anchor_bottom = top_anchor + 0.065
-	button.offset_left = 0.0
-	button.offset_top = 0.0
-	button.offset_right = 0.0
-	button.offset_bottom = 0.0
-	button.alignment = HORIZONTAL_ALIGNMENT_LEFT
 	button.focus_mode = Control.FOCUS_ALL
 	button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	button.add_theme_font_override("font", _serif)
 	button.add_theme_font_size_override("font_size", 19)
-	button.add_theme_constant_override("h_separation", 12)
 	button.add_theme_color_override("font_color", Color("b6b4b0"))
 	button.add_theme_color_override("font_hover_color", AMBER)
 	button.add_theme_color_override("font_focus_color", Color("ffd39b"))
 	button.add_theme_color_override("font_pressed_color", Color("fff1dc"))
-	button.add_theme_stylebox_override("normal", _menu_button_style(Color(0.01, 0.018, 0.022, 0.1), Color(0.77, 0.55, 0.31, 0.18)))
+	button.add_theme_stylebox_override("normal", _menu_button_style(Color(0.01, 0.018, 0.022, 0.10), Color(0.77, 0.55, 0.31, 0.18)))
 	button.add_theme_stylebox_override("hover", _menu_button_style(Color(0.22, 0.115, 0.04, 0.48), Color(0.9, 0.56, 0.25, 0.75)))
 	button.add_theme_stylebox_override("focus", _menu_button_style(Color(0.22, 0.115, 0.04, 0.48), Color(0.9, 0.56, 0.25, 0.85)))
 	button.add_theme_stylebox_override("pressed", _menu_button_style(Color(0.3, 0.15, 0.05, 0.65), Color(1.0, 0.65, 0.31, 0.95)))
-	button.modulate = Color(0.9, 0.9, 0.88, 1.0)
 	button.mouse_entered.connect(button.grab_focus)
 	button.focus_entered.connect(_animate_menu_button.bind(button, true))
 	button.focus_exited.connect(_animate_menu_button.bind(button, false))
@@ -155,6 +138,44 @@ func _animate_menu_button(button: Button, highlighted: bool) -> void:
 	var tween := create_tween().set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
 	tween.tween_property(button, "modulate", target, 0.16)
 
+func _sync_language(_values: Dictionary) -> void:
+	if not is_instance_valid(_home):
+		return
+	var arabic := String(SettingsManager.get_value("language", "English")) == "Arabic"
+	var left := 0.07 if not arabic else 0.53
+	_title.anchor_left = left
+	_title.anchor_top = 0.17
+	_title.anchor_right = left + 0.42
+	_title.anchor_bottom = 0.34
+	_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT if arabic else HORIZONTAL_ALIGNMENT_LEFT
+	_subtitle.text = SettingsManager.text_for("subtitle")
+	_subtitle.anchor_left = left + 0.005
+	_subtitle.anchor_top = 0.35
+	_subtitle.anchor_right = left + 0.44
+	_subtitle.anchor_bottom = 0.395
+	_subtitle.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT if arabic else HORIZONTAL_ALIGNMENT_LEFT
+	_home.layout_direction = Control.LAYOUT_DIRECTION_RTL if arabic else Control.LAYOUT_DIRECTION_LTR
+	var buttons := [_play_button, _settings_button, _quit_button]
+	var keys := ["play", "settings", "quit"]
+	for index in buttons.size():
+		var button: Button = buttons[index]
+		button.text = "◇      " + SettingsManager.text_for(keys[index])
+		button.anchor_left = left
+		button.anchor_right = left + 0.34
+		button.alignment = HORIZONTAL_ALIGNMENT_RIGHT if arabic else HORIZONTAL_ALIGNMENT_LEFT
+	if is_instance_valid(_quit_dialog):
+		_quit_dialog.title = SettingsManager.text_for("quit_title")
+		_quit_dialog.dialog_text = SettingsManager.text_for("quit_question")
+		_quit_dialog.ok_button_text = SettingsManager.text_for("quit")
+		_quit_dialog.cancel_button_text = SettingsManager.text_for("cancel")
+
+func _create_quit_dialog() -> void:
+	_quit_dialog = ConfirmationDialog.new()
+	_quit_dialog.title = SettingsManager.text_for("quit_title")
+	_quit_dialog.dialog_text = SettingsManager.text_for("quit_question")
+	_quit_dialog.confirmed.connect(_on_quit_confirmed)
+	add_child(_quit_dialog)
+
 func _create_fade_overlay() -> void:
 	_fade = ColorRect.new()
 	_fade.name = "FadeToBlack"
@@ -162,6 +183,11 @@ func _create_fade_overlay() -> void:
 	_fade.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	_fade.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_fade)
+
+func _input(event: InputEvent) -> void:
+	if _home.visible and not _settings.visible and event.is_action_pressed("pause"):
+		_quit_dialog.popup_centered()
+		get_viewport().set_input_as_handled()
 
 func _on_play_pressed() -> void:
 	_home.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -183,6 +209,9 @@ func _on_settings_back() -> void:
 	_play_button.grab_focus()
 
 func _on_quit_pressed() -> void:
+	_quit_dialog.popup_centered()
+
+func _on_quit_confirmed() -> void:
 	get_tree().quit()
 
 func _menu_button_style(background: Color, border: Color) -> StyleBoxFlat:
