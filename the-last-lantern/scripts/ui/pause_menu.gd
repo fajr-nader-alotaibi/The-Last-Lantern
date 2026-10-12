@@ -8,16 +8,23 @@ const SETTINGS_MENU_SCENE := preload("res://scenes/ui/settings_menu.tscn")
 var _pause_home: Control
 var _settings: Control
 var _resume_button: Button
+var _pause_heading: Label
+var _pause_buttons: Dictionary = {}
+var _ui_font: SystemFont
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	mouse_filter = Control.MOUSE_FILTER_STOP
+	_ui_font = SystemFont.new()
+	_ui_font.font_names = PackedStringArray(["Segoe UI", "Arial"])
 	_build_pause_home()
 	_settings = SETTINGS_MENU_SCENE.instantiate()
 	_settings.visible = false
 	_settings.connect("back_requested", Callable(self, "_on_settings_back"))
 	add_child(_settings)
+	SettingsManager.settings_changed.connect(_sync_language)
+	_sync_language(SettingsManager.get_values_copy())
 
 func open() -> void:
 	visible = true
@@ -61,23 +68,23 @@ func _build_pause_home() -> void:
 	layout.alignment = BoxContainer.ALIGNMENT_CENTER
 	layout.add_theme_constant_override("separation", 12)
 	panel.add_child(layout)
-	var heading := Label.new()
-	heading.text = "PAUSED"
-	heading.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	heading.add_theme_font_size_override("font_size", 29)
-	heading.add_theme_color_override("font_color", Color("e9e2d8"))
-	layout.add_child(heading)
+	_pause_heading = Label.new()
+	_pause_heading.text = "PAUSED"
+	_pause_heading.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_pause_heading.add_theme_font_size_override("font_size", 29)
+	_pause_heading.add_theme_color_override("font_color", Color("e9e2d8"))
+	layout.add_child(_pause_heading)
 	var line := ColorRect.new()
 	line.color = Color(0.81, 0.53, 0.26, 0.45)
 	line.custom_minimum_size.y = 1
 	layout.add_child(line)
-	_resume_button = _add_pause_button(layout, "RESUME", _resume)
-	_add_pause_button(layout, "SETTINGS", _open_settings)
-	_add_pause_button(layout, "MAIN MENU", _return_to_menu)
+	_resume_button = _add_pause_button(layout, "resume", _resume)
+	_add_pause_button(layout, "settings", _open_settings)
+	_add_pause_button(layout, "main_menu", _return_to_menu)
 
-func _add_pause_button(parent: VBoxContainer, text: String, callback: Callable) -> Button:
+func _add_pause_button(parent: VBoxContainer, text_key: String, callback: Callable) -> Button:
 	var button := Button.new()
-	button.text = text
+	button.text = SettingsManager.text_for(text_key)
 	button.custom_minimum_size = Vector2(240, 42)
 	button.focus_mode = Control.FOCUS_ALL
 	button.add_theme_font_size_override("font_size", 16)
@@ -88,7 +95,21 @@ func _add_pause_button(parent: VBoxContainer, text: String, callback: Callable) 
 	button.add_theme_stylebox_override("focus", _button_style(Color(0.2, 0.11, 0.045, 0.75), Color(0.82, 0.54, 0.25, 0.85)))
 	button.pressed.connect(callback)
 	parent.add_child(button)
+	_pause_buttons[text_key] = button
 	return button
+
+func _sync_language(_values: Dictionary) -> void:
+	var arabic := String(SettingsManager.get_value("language", "English")) == "Arabic"
+	var direction := Control.LAYOUT_DIRECTION_RTL if arabic else Control.LAYOUT_DIRECTION_LTR
+	if is_instance_valid(_pause_home):
+		_pause_home.layout_direction = direction
+	if is_instance_valid(_pause_heading):
+		_pause_heading.text = SettingsManager.text_for("paused")
+		_pause_heading.add_theme_font_override("font", _ui_font)
+	for key in _pause_buttons:
+		var button: Button = _pause_buttons[key]
+		button.text = SettingsManager.text_for(String(key))
+		button.add_theme_font_override("font", _ui_font)
 
 func _open_settings() -> void:
 	_pause_home.visible = false

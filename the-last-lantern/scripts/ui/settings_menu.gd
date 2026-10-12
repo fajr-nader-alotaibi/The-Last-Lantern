@@ -261,8 +261,10 @@ func _build_category_content() -> void:
 		var button: Button = _category_buttons[category]
 		button.text = SettingsManager.text_for(CATEGORY_KEYS[category])
 		button.alignment = HORIZONTAL_ALIGNMENT_RIGHT if String(SettingsManager.get_value("language", "English")) == "Arabic" else HORIZONTAL_ALIGNMENT_LEFT
+		button.add_theme_font_override("font", _sans)
 		button.add_theme_color_override("font_color", AMBER if category == _active_category else MUTED)
 	get_node("SettingsCategories/NavBack").text = "←   " + SettingsManager.text_for("back")
+	get_node("SettingsCategories/NavBack").add_theme_font_override("font", _sans)
 	get_node("GameSubtitle").text = SettingsManager.text_for("subtitle")
 	_apply_button.text = SettingsManager.text_for("apply")
 	_restore_button.text = SettingsManager.text_for("restore_defaults")
@@ -638,8 +640,14 @@ func _apply_language_layout() -> void:
 	for child in _content.get_children():
 		if child is Label:
 			child.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT if arabic else HORIZONTAL_ALIGNMENT_LEFT
+			child.add_theme_font_override("font", _sans)
 		if child is HBoxContainer and child.get_child_count() > 0 and child.get_child(0) is Label:
 			child.get_child(0).horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT if arabic else HORIZONTAL_ALIGNMENT_LEFT
+			child.get_child(0).add_theme_font_override("font", _sans)
+			for index in range(1, child.get_child_count()):
+				var widget := child.get_child(index)
+				if widget is Control:
+					widget.add_theme_font_override("font", _sans)
 func _play_audio_preview() -> void:
 	var sample_rate := 22050
 	var duration := 0.18

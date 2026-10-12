@@ -1,25 +1,58 @@
 extends Control
 
 var _lantern_count: Label
+var _objective: Label
 var _prompt_panel: PanelContainer
 var _prompt_label: Label
+var _lantern_value := 0
+var _lantern_total := 4
+var _objective_key := "objective_start"
+var _prompt_key := ""
+var _ui_font: SystemFont
 
 func _ready() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_ui_font = SystemFont.new()
+	_ui_font.font_names = PackedStringArray(["Segoe UI", "Arial"])
 	_create_counter()
 	_create_objective()
 	_create_prompt()
+	SettingsManager.settings_changed.connect(_refresh_language)
+	_refresh_language(SettingsManager.get_values_copy())
 
 func set_lantern_count(count: int, total: int = 4) -> void:
-	if is_instance_valid(_lantern_count):
-		_lantern_count.text = "LANTERNS   %d / %d" % [count, total]
+	_lantern_value = count
+	_lantern_total = total
+	_refresh_language(SettingsManager.get_values_copy())
 
-func set_interaction_prompt(text: String) -> void:
+func set_objective(key: String) -> void:
+	_objective_key = key
+	_refresh_language(SettingsManager.get_values_copy())
+
+func set_interaction_prompt(key: String) -> void:
 	if not is_instance_valid(_prompt_panel):
 		return
-	_prompt_label.text = text.to_upper()
-	_prompt_panel.visible = not text.is_empty()
+	_prompt_key = key
+	_prompt_label.text = SettingsManager.text_for(key) if not key.is_empty() else ""
+	_prompt_panel.visible = not key.is_empty()
+
+func _refresh_language(_values: Dictionary) -> void:
+	var arabic := String(SettingsManager.get_value("language", "English")) == "Arabic"
+	var direction := Control.LAYOUT_DIRECTION_RTL if arabic else Control.LAYOUT_DIRECTION_LTR
+	layout_direction = direction
+	var interface_font: Font = _ui_font
+	if is_instance_valid(_lantern_count):
+		_lantern_count.text = "%s   %d / %d" % [SettingsManager.text_for("lanterns"), _lantern_value, _lantern_total]
+		_lantern_count.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT if arabic else HORIZONTAL_ALIGNMENT_LEFT
+		_lantern_count.add_theme_font_override("font", interface_font)
+	if is_instance_valid(_objective):
+		_objective.text = SettingsManager.text_for(_objective_key)
+		_objective.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT if arabic else HORIZONTAL_ALIGNMENT_LEFT
+		_objective.add_theme_font_override("font", interface_font)
+	if is_instance_valid(_prompt_label):
+		_prompt_label.text = SettingsManager.text_for(_prompt_key) if not _prompt_key.is_empty() else ""
+		_prompt_label.add_theme_font_override("font", interface_font)
 
 func _create_counter() -> void:
 	_lantern_count = Label.new()
@@ -35,17 +68,17 @@ func _create_counter() -> void:
 	add_child(_lantern_count)
 
 func _create_objective() -> void:
-	var objective := Label.new()
-	objective.text = "WALK THE STONE PATH  ·  FIND THE FIRST LIGHT"
-	objective.set_anchors_preset(Control.PRESET_BOTTOM_RIGHT)
-	objective.anchor_left = 0.53
-	objective.anchor_top = 0.91
-	objective.anchor_right = 0.97
-	objective.anchor_bottom = 0.96
-	objective.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	objective.add_theme_font_size_override("font_size", 13)
-	objective.add_theme_color_override("font_color", Color("d7d8d5"))
-	add_child(objective)
+	_objective = Label.new()
+	_objective.text = "WALK THE STONE PATH  ·  FIND THE FIRST LIGHT"
+	_objective.set_anchors_preset(Control.PRESET_BOTTOM_RIGHT)
+	_objective.anchor_left = 0.53
+	_objective.anchor_top = 0.91
+	_objective.anchor_right = 0.97
+	_objective.anchor_bottom = 0.96
+	_objective.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	_objective.add_theme_font_size_override("font_size", 13)
+	_objective.add_theme_color_override("font_color", Color("d7d8d5"))
+	add_child(_objective)
 
 func _create_prompt() -> void:
 	_prompt_panel = PanelContainer.new()

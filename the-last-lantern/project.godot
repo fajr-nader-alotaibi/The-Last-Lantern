@@ -18,6 +18,7 @@ config/icon="res://icon.svg"
 [autoload]
 
 SettingsManager="*res://scripts/settings/settings_manager.gd"
+GameProgress="*res://scripts/game_progress.gd"
 
 [display]
 

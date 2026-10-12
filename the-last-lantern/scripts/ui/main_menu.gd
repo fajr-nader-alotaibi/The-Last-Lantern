@@ -16,6 +16,7 @@ var _quit_button: Button
 var _quit_dialog: ConfirmationDialog
 var _fade: ColorRect
 var _serif: SystemFont
+var _ui_font: SystemFont
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
@@ -23,6 +24,8 @@ func _ready() -> void:
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	_serif = SystemFont.new()
 	_serif.font_names = PackedStringArray(["Georgia", "Times New Roman"])
+	_ui_font = SystemFont.new()
+	_ui_font.font_names = PackedStringArray(["Segoe UI", "Arial"])
 	_build_image_background()
 	_build_home()
 	_settings = SETTINGS_MENU_SCENE.instantiate()
@@ -163,6 +166,7 @@ func _sync_language(_values: Dictionary) -> void:
 		button.anchor_left = left
 		button.anchor_right = left + 0.34
 		button.alignment = HORIZONTAL_ALIGNMENT_RIGHT if arabic else HORIZONTAL_ALIGNMENT_LEFT
+		button.add_theme_font_override("font", _ui_font if arabic else _serif)
 	if is_instance_valid(_quit_dialog):
 		_quit_dialog.title = SettingsManager.text_for("quit_title")
 		_quit_dialog.dialog_text = SettingsManager.text_for("quit_question")
