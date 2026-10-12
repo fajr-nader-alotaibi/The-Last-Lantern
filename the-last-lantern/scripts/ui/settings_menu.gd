@@ -5,7 +5,7 @@ signal back_requested
 const CATEGORIES := ["GAMEPLAY", "GRAPHICS", "AUDIO", "UI"]
 const CATEGORY_KEYS := {"GAMEPLAY": "gameplay", "GRAPHICS": "graphics", "AUDIO": "audio", "UI": "ui"}
 const BINDING_KEYS := {
-	"move_forward": "move_forward", "move_left": "move_left", "move_backward": "move_backward", "move_right": "move_right",
+	"move_forward": "move_forward", "move_left": "move_left", "move_backward": "move_backward", "move_right": "move_right", "sprint": "sprint",
 	"camera_orbit_left": "orbit_left", "camera_orbit_right": "orbit_right", "interact": "interact_use",
 }
 const AMBER := Color("e6a254")
@@ -495,7 +495,7 @@ func _refresh_controls_overview() -> void:
 	heading.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT if String(SettingsManager.get_value("language", "English")) == "Arabic" else HORIZONTAL_ALIGNMENT_LEFT
 	_guide.add_child(heading)
 	_add_guide_section("camera_behavior", "%s / %s   ·   360°\n%s" % [_key("camera_orbit_left"), _key("camera_orbit_right"), SettingsManager.text_for("camera_guide")])
-	_add_guide_section("movement_camera", "%s  %s  %s  %s   ·   %s" % [_key("move_forward"), _key("move_left"), _key("move_backward"), _key("move_right"), SettingsManager.text_for("movement_guide")])
+	_add_guide_section("movement_camera", "%s  %s  %s  %s   ·   %s\n%s: %s" % [_key("move_forward"), _key("move_left"), _key("move_backward"), _key("move_right"), SettingsManager.text_for("movement_guide"), SettingsManager.text_for("sprint"), _key("sprint")])
 	_add_guide_section("interaction", "%s   ·   %s" % [_key("interact"), SettingsManager.text_for("interaction_guide")])
 	_add_guide_section("menu_guide", "Esc   ·   %s" % SettingsManager.text_for("menu_guide"))
 	var note := Label.new()

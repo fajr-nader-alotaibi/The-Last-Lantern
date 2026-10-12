@@ -3,11 +3,12 @@ extends CharacterBody3D
 signal interaction_prompt_changed(prompt: String)
 
 const WALK_SPEED := 3.5
+const RUN_SPEED := 5.0
 const ACCELERATION := 12.0
 const GRAVITY := 18.0
 const FOCUS_HEIGHT := 0.95
 const TURN_SPEED := deg_to_rad(145.0)
-const CHARACTER_SCENE := preload("res://assets/character/explorer.glb")
+const CHARACTER_SCENE := preload("res://assets/character/explorer_rigged.glb")
 
 @onready var _visual_pivot: Node3D = $VisualPivot
 @onready var _camera: Camera3D = $CameraPivot/Camera3D
@@ -23,12 +24,15 @@ var _camera_height := 1.6
 var _follow_speed := 0.8
 var _fov := 70.0
 var _collision_avoidance := true
+var _character_animation_player: AnimationPlayer
+var _current_character_animation := ""
 
 func _ready() -> void:
 	var character := CHARACTER_SCENE.instantiate()
 	character.name = "ExplorerModel"
 	_visual_pivot.add_child(character)
 	_visual_pivot.position.y = 0.0
+	_setup_character_animations(character)
 	_camera.current = true
 	_apply_settings(SettingsManager.get_values_copy())
 	SettingsManager.settings_changed.connect(_apply_settings)
@@ -39,16 +43,19 @@ func _physics_process(delta: float) -> void:
 	var forward := Vector3(sin(_camera_yaw), 0.0, -cos(_camera_yaw))
 	var right := Vector3(cos(_camera_yaw), 0.0, sin(_camera_yaw))
 	var direction := right * input_vector.x - forward * input_vector.y
+	var wants_to_run := Input.is_action_pressed("sprint") and direction.length_squared() > 0.01
 	if direction.length_squared() > 0.01:
 		direction = direction.normalized()
 		_visual_pivot.rotation.y = atan2(-direction.x, -direction.z)
-	velocity.x = move_toward(velocity.x, direction.x * WALK_SPEED, ACCELERATION * delta)
-	velocity.z = move_toward(velocity.z, direction.z * WALK_SPEED, ACCELERATION * delta)
+	var move_speed := RUN_SPEED if wants_to_run else WALK_SPEED
+	velocity.x = move_toward(velocity.x, direction.x * move_speed, ACCELERATION * delta)
+	velocity.z = move_toward(velocity.z, direction.z * move_speed, ACCELERATION * delta)
 	if not is_on_floor():
 		velocity.y -= GRAVITY * delta
 	else:
 		velocity.y = -0.05
 	move_and_slide()
+	_update_character_animation(direction.length_squared() > 0.01, wants_to_run)
 	_update_interactable()
 	if Input.is_action_just_pressed("interact") and is_instance_valid(_interactable):
 		if _interactable.has_method("interact"):
@@ -136,3 +143,25 @@ func _apply_settings(settings: Dictionary) -> void:
 	_fov = float(settings.get("field_of_view", 70.0))
 	_collision_avoidance = bool(settings.get("camera_collision", true))
 	refresh_cursor_state()
+
+func _setup_character_animations(character: Node) -> void:
+	var players := character.find_children("*", "AnimationPlayer", true, false)
+	if players.is_empty():
+		push_warning("Explorer rig imported without an AnimationPlayer; using the model without animation.")
+		return
+	_character_animation_player = players[0] as AnimationPlayer
+	for animation_name in ["Idle", "Walk", "Run"]:
+		if _character_animation_player.has_animation(animation_name):
+			_character_animation_player.get_animation(animation_name).loop_mode = Animation.LOOP_LINEAR
+	_update_character_animation(false, false)
+
+func _update_character_animation(is_moving: bool, is_running: bool) -> void:
+	if not is_instance_valid(_character_animation_player):
+		return
+	var animation_name := "Idle"
+	if is_moving:
+		animation_name = "Run" if is_running else "Walk"
+	if animation_name == _current_character_animation or not _character_animation_player.has_animation(animation_name):
+		return
+	_current_character_animation = animation_name
+	_character_animation_player.play(animation_name, 0.18)

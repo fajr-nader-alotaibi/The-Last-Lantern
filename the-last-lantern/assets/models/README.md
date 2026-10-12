@@ -1,10 +1,31 @@
-# Forest model shortlist
+# Forest model shortlist and imports
 
-The forest opening is currently a lightweight Godot blockout built from primitive meshes. No Sketchfab files have been copied into this folder yet.
+The compact forest blockout now uses low-poly imported ferns and a Torii gate, with the existing pine model used for distant trees. The optimized GLBs below are copies; files in Downloads were left unchanged.
+
+## Imported into the project
+
+| Model | Project file | Geometry | Project file size | Use / license |
+| --- | --- | ---: | ---: | --- |
+| Low-poly fern | props/fern_low_poly_512.glb | 306 triangles | 1.53 MiB | Repeated foliage; 512px textures. Sketchfab Free Standard, marked NoAI. |
+| Japanese Torii gate | props/japanese_torii_gate_1k.glb | 1,252 triangles | 2.02 MiB | Used on the forest path near the temple; 1K textures. CC BY: credit Sahir Virmani. |
+| Japanese stone Tōrō | props/japanese_stone_lanterntoro_512.glb | 1,960 triangles | 8.07 MiB | Optional prop, not used for the four interactive lanterns yet. 512px textures. CC BY-NC: credit ArunIniyan; non-commercial use only. |
+
+The downloaded fern and lantern each contained many 1K PNGs. Project copies were resized to 512px to reduce their file weight while preserving the originals in Downloads. The fern and Torii copies also have normalized scale/orientation and ground-level pivots for placement in Godot. The pine model was already in the project and was previously reduced to 1K textures.
+
+The existing gameplay lanterns, bridge, pond, rocks, and timber hall remain lightweight Godot-built pieces. No additional Meshy output is required to keep building the compact forest. The Tōrō file has 11 materials and 33 embedded images, so it is intentionally kept optional until its materials and in-game appearance are checked.
+
+
+## Credits for imported props
+
+- Fern: Barney2.1, “Fern Low poly game ready,” Sketchfab Free Standard; the page is marked NoAI. https://sketchfab.com/3d-models/fern-low-poly-game-ready-49b475dcbf7a45a0ac4bf5551bf92336
+- Torii: Sahir Virmani, “Japanese Torii Gate,” CC BY. https://sketchfab.com/3d-models/japanese-torii-gate-2027a248de1b4b70985ff97e708fb50d
+- Stone lantern: ArunIniyan, “Japanese Stone Lantern (Tōrō),” CC BY-NC. https://sketchfab.com/3d-models/japanese-stone-lanterntoro-c1d062b3ff1548e3abfdf7bafc14254d
+
+The lantern license is non-commercial. If the game is ever monetized or distributed commercially, replace it with an asset whose license permits that use. Keep the Torii attribution in the credits.
 
 ## Best fits from the supplied links
 
-- **Fern:** `Low poly game-ready fern` — 308 triangles, game-ready, Free Standard. Good foliage candidate. [Sketchfab page](https://sketchfab.com/3d-models/low-poly-game-ready-fern-869826a3d24a448eb3bc6a51e8ed5125)
+- **Fern:** `Low poly game-ready fern` — 306 triangles, game-ready, Free Standard. Good foliage candidate. [Sketchfab page](https://sketchfab.com/3d-models/low-poly-game-ready-fern-869826a3d24a448eb3bc6a51e8ed5125)
 - **Rock:** `Mossy Rock` — 19.9k triangles, CC BY. Fine for a few landmark rocks, but too many repeats are wasteful. [Sketchfab page](https://sketchfab.com/3d-models/mossy-rock-6fea9922d99449a7a20be7e0daa73d20)
 - **Lantern alternative:** `Japanese Toro` — about 1.8k triangles, CC BY. Better for repeated gameplay lanterns than the supplied 42k-triangle test model. [Sketchfab page](https://sketchfab.com/3d-models/japanese-toro-afe883adeab045348b7dc9a038975feb)
 - **Forest skybox:** the 6K panorama is only a distant backdrop, not walkable fog or a forest mesh. Optional for a menu or horizon; reduce it to 2K before using on a low-memory machine. [Sketchfab page](https://sketchfab.com/3d-models/creepy-misty-forest-skybox-60721c4b8d7c46078e3a9bfda1de3493)
@@ -14,8 +35,8 @@ The forest opening is currently a lightweight Godot blockout built from primitiv
 - The supplied Japanese red pine is CC0 but has about **508,800 triangles**. Do not scatter it through the level; request a low-poly remake or decimate it in Blender first. [Sketchfab page](https://sketchfab.com/3d-models/cc0-japanese-red-pine-pinus-densiflora-a6be820fbf46456eb35bcafc7e66bd12)
 - The supplied mossy stairs have about **149,400 triangles** and a **CC BY-NC-SA** license. Avoid them in a distributable game; simple stair meshes are enough here. [Sketchfab page](https://sketchfab.com/3d-models/mossy-stone-stairs-ff2e39a7896a49189375c2aa5abb8476)
 - The supplied pond is about **102,800 triangles**, depicts a landscaped American pond, and does not expose a download button on its page. Use the simple pond mesh in the blockout. [Sketchfab page](https://sketchfab.com/3d-models/valley-pond-d7bf45d6e5ad422b949d58140fae13f7)
-- The supplied stone Tōrō is about **2,000 triangles**, but its license is **CC BY-NC**. Avoid using it in a distributable game. The 42,300-triangle Toro Generator model is CC BY but unnecessarily dense for four copies.
-- The supplied Torii listing now points to a paid Fab asset. The rough blockout gate is already built from simple Godot meshes.
+- The supplied stone Tōrō is about **2,000 triangles**, but its license is **CC BY-NC**. Use it only in a non-commercial release with attribution. The 42,300-triangle Toro Generator model is CC BY but unnecessarily dense for four copies.
+- The original supplied Torii link was unsuitable, so a separate 1,252-triangle CC BY Torii model is used in the project instead.
 - `Shimenawa` and its paper streamers are religious markers. They are intentionally omitted along with Buddha/statue props, per the requested art direction.
 - The 342k-triangle night-forest scene and the incomplete overgrown location are not used as the playable level; they are too monolithic or unfinished for this small connected map.
 
@@ -62,9 +83,9 @@ Create one standalone weathered Japanese timber entry gate for a forest path. Us
 ## Import notes
 
 - Prefer **GLB** so geometry and materials stay together; do not commit source archives or multiple 4K texture maps unless needed.
-- Use the fern and rock for close foreground accents; reuse the simple procedural trees in the distance.
-- Keep a copy of each model's creator and license in a credits file before releasing the game.
-- Official Sketchfab downloads in this session asked for a Sketchfab login. Sign in manually before any download; do not use third-party rippers.
+- Use imported fern clusters for close foreground accents and the imported Torii at the entry; reuse the low-poly pine for distant trees.
+- The imported prop creators and license terms are recorded above for the release credits.
+
 
 ## Imported user model
 

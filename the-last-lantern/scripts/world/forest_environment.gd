@@ -1,6 +1,8 @@
 extends Node3D
 
 const DISTANT_PINE_SCENE := preload("res://assets/models/Japanese_Pine_v1_1K.glb")
+const FERN_PROP_SCENE := preload("res://assets/models/props/fern_low_poly_512.glb")
+const TORII_PROP_SCENE := preload("res://assets/models/props/japanese_torii_gate_1k.glb")
 
 var _canopies: Array[Node3D] = []
 var _flicker_lights: Array[OmniLight3D] = []
@@ -169,12 +171,8 @@ func _build_gameplay_landmarks() -> void:
 	_box(Vector3(0.0, 0.65, -35.0), Vector3(1.25, 1.3, 0.8), wood_trim, "CliffsideStoneMarker")
 	_create_rock_ring(Vector3(0.0, 0.0, -35.0), 5.4, 12, stone, 907)
 
-	# Torii entrance and a small timber hall frame the forest's far end.
-	var torii := _material(Color("30201e"), 0.84, Color("361b18"), 0.06)
-	_box(Vector3(-3.25, 2.35, -43.0), Vector3(0.38, 4.7, 0.48), torii, "TempleGatePillarLeft")
-	_box(Vector3(3.25, 2.35, -43.0), Vector3(0.38, 4.7, 0.48), torii, "TempleGatePillarRight")
-	_box(Vector3(0.0, 4.65, -43.0), Vector3(7.6, 0.4, 0.72), torii, "TempleGateCrossbeam")
-	_box(Vector3(0.0, 4.0, -43.0), Vector3(6.4, 0.22, 0.5), torii, "TempleGateLowerBeam")
+	# Imported low-poly gate marks the forest's far end.
+	_add_torii(Vector3(0.0, 0.0, -43.0), 0.75, "TempleToriiGate")
 
 	_box(Vector3(0.0, 0.12, -51.0), Vector3(10.0, 0.24, 8.0), stone, "TempleForecourt")
 	_box(Vector3(0.0, 2.2, -51.5), Vector3(8.0, 4.0, 5.8), wood, "FinalTimberHall")
@@ -261,19 +259,23 @@ func _create_rock_ring(center: Vector3, radius: float, count: int, material: Mat
 		add_child(rock)
 
 func _create_fern_cluster(origin: Vector3, rng: RandomNumberGenerator) -> void:
-	var material := _material(Color("1b2923"), 0.98)
-	for index in range(3):
-		var frond := MeshInstance3D.new()
-		frond.name = "FernFrond"
-		var mesh := PrismMesh.new()
-		mesh.size = Vector3(0.28, rng.randf_range(0.5, 0.9), 0.16)
-		frond.mesh = mesh
-		frond.material_override = material
-		frond.position = origin + Vector3(rng.randf_range(-0.28, 0.28), mesh.size.y * 0.5, rng.randf_range(-0.28, 0.28))
-		frond.rotation.z = rng.randf_range(-0.4, 0.4)
-		frond.rotation.y = rng.randf_range(0.0, TAU)
-		frond.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-		add_child(frond)
+	var fern := FERN_PROP_SCENE.instantiate() as Node3D
+	fern.name = "FernCluster"
+	fern.position = origin
+	fern.rotation.y = rng.randf_range(0.0, TAU)
+	# The imported GLB has a normalized pivot and a 0.65 m clump height.
+	fern.scale = Vector3.ONE * rng.randf_range(0.9, 1.05)
+	_disable_shadows_recursively(fern)
+	add_child(fern)
+
+func _add_torii(origin: Vector3, uniform_scale: float, node_name: String) -> void:
+	var gate := TORII_PROP_SCENE.instantiate() as Node3D
+	gate.name = node_name
+	# The optimized GLB includes a corrected scale, orientation, and ground-level pivot.
+	gate.position = origin
+	gate.scale = Vector3.ONE * uniform_scale
+	_disable_shadows_recursively(gate)
+	add_child(gate)
 
 func _process(delta: float) -> void:
 	_time += delta
@@ -422,14 +424,7 @@ func _build_path_and_torii() -> void:
 		step.rotation.y = (0.5 - float(index % 2)) * 0.015
 		add_child(step)
 
-	var torii_material := _material(Color("241d1b"), 0.78, Color("3d211b"), 0.08)
-	var upright_left := _box(Vector3(-3.3, 2.65, -17.1), Vector3(0.42, 5.3, 0.5), torii_material, "ToriiPillarLeft")
-	var upright_right := _box(Vector3(3.3, 2.65, -17.1), Vector3(0.42, 5.3, 0.5), torii_material, "ToriiPillarRight")
-	upright_left.rotation.z = 0.018
-	upright_right.rotation.z = -0.018
-	_box(Vector3(0.0, 5.24, -17.1), Vector3(8.1, 0.43, 0.75), torii_material, "ToriiCrossbeam")
-	_box(Vector3(0.0, 4.56, -17.1), Vector3(6.8, 0.24, 0.52), torii_material, "ToriiLintel")
-	_box(Vector3(0.0, 3.91, -17.1), Vector3(0.22, 0.98, 0.22), torii_material, "ToriiCenterBrace")
+	_add_torii(Vector3(0.0, 0.0, -17.1), 1.0, "MenuToriiGate")
 
 func _build_stone_lanterns(lit: bool = true) -> void:
 	var stone := _material(Color("353638"), 0.8)

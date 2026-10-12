@@ -5,13 +5,14 @@ signal settings_changed(values: Dictionary)
 const CONFIG_PATH := "user://settings.cfg"
 const KEY_ACTIONS := [
 	"move_forward", "move_left", "move_backward", "move_right",
-	"camera_orbit_left", "camera_orbit_right", "interact",
+	"camera_orbit_left", "camera_orbit_right", "interact", "sprint",
 ]
 const DEFAULT_BINDINGS := {
 	"move_forward": KEY_W,
 	"move_left": KEY_A,
 	"move_backward": KEY_S,
 	"move_right": KEY_D,
+	"sprint": KEY_SHIFT,
 	"camera_orbit_left": KEY_Q,
 	"camera_orbit_right": KEY_E,
 	"interact": KEY_F,
@@ -51,7 +52,7 @@ const TEXT := {
 		"binding_saved": "Key binding updated. Press Apply to save it.", "save_failed": "Settings changed but could not be saved.",
 		"quit_title": "Leave the forest?", "quit_question": "Are you sure you want to close the game?", "on": "ON", "off": "OFF",
 		"movement_camera": "MOVEMENT & CAMERA", "key_bindings": "KEY BINDINGS", "interaction": "INTERACTION", "camera_behavior": "CAMERA BEHAVIOR",
-		"movement_type": "Movement Type", "camera_mode": "Camera Mode", "camera_rotation": "Camera Rotation", "rotation_step": "Rotation Step",
+		"movement_type": "Movement Type", "sprint": "Sprint (hold)", "camera_mode": "Camera Mode", "camera_rotation": "Camera Rotation", "rotation_step": "Rotation Step",
 		"mouse_control": "Mouse Camera Control", "mouse_sensitivity": "Mouse Sensitivity", "invert_y": "Invert Y Axis", "fov": "Field of View",
 		"camera_follow_speed": "Camera Follow Speed", "camera_height": "Camera Height", "camera_distance": "Camera Distance", "collision_avoidance": "Collision Avoidance",
 		"move_forward": "Move Forward", "move_left": "Move Left", "move_backward": "Move Backward", "move_right": "Move Right",
@@ -77,7 +78,7 @@ const TEXT := {
 		"binding_saved": "تم تغيير الزر. اضغطي تطبيق لحفظه.", "save_failed": "تغيّرت الإعدادات لكن تعذّر حفظها.",
 		"quit_title": "مغادرة الغابة؟", "quit_question": "هل تريدين إغلاق اللعبة؟", "on": "تشغيل", "off": "إيقاف",
 		"movement_camera": "الحركة والكاميرا", "key_bindings": "تغيير الأزرار", "interaction": "التفاعل", "camera_behavior": "سلوك الكاميرا",
-		"movement_type": "طريقة الحركة", "camera_mode": "نمط الكاميرا", "camera_rotation": "دوران الكاميرا", "rotation_step": "مقدار الدوران",
+		"movement_type": "طريقة الحركة", "sprint": "ركض سريع (استمرار)", "camera_mode": "نمط الكاميرا", "camera_rotation": "دوران الكاميرا", "rotation_step": "مقدار الدوران",
 		"mouse_control": "التحكم بالكاميرا بالفأرة", "mouse_sensitivity": "حساسية الفأرة", "invert_y": "عكس المحور Y", "fov": "مجال الرؤية",
 		"camera_follow_speed": "سرعة تتبع الكاميرا", "camera_height": "ارتفاع الكاميرا", "camera_distance": "بعد الكاميرا", "collision_avoidance": "تجنب الاصطدام",
 		"move_forward": "تقدم", "move_left": "تحرك يسارًا", "move_backward": "تراجع", "move_right": "تحرك يمينًا",
